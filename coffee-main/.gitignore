@@ -51,3 +51,6 @@ staticfiles/
 # OS
 Thumbs.db
 .DS_Store
+
+# Render
+.render/

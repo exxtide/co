@@ -1,0 +1,56 @@
+services:
+  # Backend Django API
+  - type: web
+    name: kofeinya-backend
+    runtime: python
+    region: frankfurt  # Или другой регион ближе к вам
+    plan: free  # Можно изменить на starter или другой план
+    buildCommand: cd kofeinya_backend && chmod +x build.sh && ./build.sh
+    startCommand: cd kofeinya_backend && gunicorn kofeinya_backend.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: DJANGO_ENV
+        value: production
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: false
+      - key: DJANGO_ALLOWED_HOSTS
+        sync: false  # Нужно будет указать вручную после создания
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false  # Нужно будет указать вручную после создания
+      - key: DJANGO_CSRF_TRUSTED_ORIGINS
+        sync: false  # Нужно будет указать вручную после создания
+      - key: FRONTEND_URL
+        sync: false  # URL фронтенда
+      - key: DJANGO_BEHIND_PROXY
+        value: true
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kofeinya-db
+          property: connectionString
+
+  # Frontend React/Vite
+  - type: web
+    name: kofeinya-frontend
+    runtime: static
+    region: frankfurt
+    plan: free
+    buildCommand: cd ponyatnaya-eda-main && npm install && npm run build
+    staticPublishPath: ponyatnaya-eda-main/dist
+    envVars:
+      - key: VITE_API_ORIGIN
+        sync: false  # URL бэкенда, нужно указать вручную
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+# База данных PostgreSQL
+databases:
+  - name: kofeinya-db
+    region: frankfurt
+    plan: free
+    databaseName: kofeinya
+    user: kofeinya
