@@ -42,6 +42,9 @@ CORS_ALLOWED_ORIGINS = https://kofeinya-frontend.onrender.com
 DJANGO_CSRF_TRUSTED_ORIGINS = https://kofeinya-backend.onrender.com,https://kofeinya-frontend.onrender.com
 FRONTEND_URL = https://kofeinya-frontend.onrender.com
 DJANGO_BEHIND_PROXY = true
+DJANGO_ADMIN_EMAIL = admin@example.com
+DJANGO_ADMIN_PASSWORD = YourSecurePassword123!
+DJANGO_ADMIN_NAME = Admin
 DATABASE_URL = [Internal Database URL из шага 1]
 ```
 
@@ -77,11 +80,21 @@ Action: Rewrite
 - `kofeinya-backend` → ваш реальный URL бэкенда
 - `kofeinya-frontend` → ваш реальный URL фронтенда
 
-### Создать суперпользователя
+### Проверить создание администратора
+
+Администратор создается автоматически! Проверьте логи:
+- Backend → Logs
+- Найдите: "✅ Администратор успешно создан"
+
+### Войти в админ-панель
 
 ```
-Backend → Shell → python manage.py createsuperuser
+URL: https://your-backend.onrender.com/admin/
+Username: ваш DJANGO_ADMIN_EMAIL
+Password: ваш DJANGO_ADMIN_PASSWORD
 ```
+
+⚠️ **ВАЖНО:** Смените пароль после первого входа!
 
 ## Готово! 🎉
 

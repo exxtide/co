@@ -57,11 +57,18 @@
    - Откройте Backend сервис
    - Перейдите в Environment
    - Замените placeholder URL на реальные
+   - **Установите DJANGO_ADMIN_EMAIL и DJANGO_ADMIN_PASSWORD**
    - Сохраните (сервис перезапустится)
 
-5. **Создайте суперпользователя:**
-   - Backend → Shell
-   - `python manage.py createsuperuser`
+5. **Проверьте создание администратора:**
+   - Backend → Logs
+   - Найдите: "✅ Администратор успешно создан"
+
+6. **Войдите в админ-панель:**
+   - URL: `https://your-backend.onrender.com/admin/`
+   - Username: ваш DJANGO_ADMIN_EMAIL
+   - Password: ваш DJANGO_ADMIN_PASSWORD
+   - ⚠️ Смените пароль после первого входа!
 
 **Готово!** 🎉
 

@@ -2,14 +2,16 @@
 # exit on error
 set -o errexit
 
-# Установка зависимостей
+echo "🔧 Установка зависимостей..."
 pip install -r requirements.txt
 
-# Сбор статических файлов
+echo "📦 Сбор статических файлов..."
 python manage.py collectstatic --no-input
 
-# Применение миграций
+echo "🗄️  Применение миграций..."
 python manage.py migrate
 
-# Создание суперпользователя (опционально, если нужно)
-# python manage.py createsuperuser --noinput --email admin@example.com || true
+echo "👤 Создание администратора по умолчанию..."
+python manage.py create_default_admin || echo "⚠️  Администратор не создан (возможно, уже существует)"
+
+echo "✅ Сборка завершена успешно!"l admin@example.com --psw 123 || true

@@ -91,6 +91,10 @@ def main():
     if check_file_exists("kofeinya_backend/Procfile", "Procfile"):
         checks_passed += 1
     
+    checks_total += 1
+    if check_file_exists("kofeinya_backend/accounts/management/commands/create_default_admin.py", "create_default_admin.py команда"):
+        checks_passed += 1
+    
     # Проверка settings.py
     checks_total += 1
     if check_file_contains("kofeinya_backend/kofeinya_backend/settings.py", "dj_database_url", "dj_database_url импортирован"):

@@ -155,6 +155,11 @@ CORS_ALLOWED_ORIGINS=https://your-frontend.com
 DJANGO_CSRF_TRUSTED_ORIGINS=https://your-backend.com
 FRONTEND_URL=https://your-frontend.com
 DATABASE_URL=postgresql://...
+
+# Администратор (создается автоматически при деплое)
+DJANGO_ADMIN_EMAIL=admin@example.com
+DJANGO_ADMIN_PASSWORD=your-secure-password
+DJANGO_ADMIN_NAME=Admin
 ```
 
 ### Frontend (.env)

@@ -29,6 +29,15 @@ https://your-frontend-name.onrender.com
 DJANGO_BEHIND_PROXY
 true
 
+DJANGO_ADMIN_EMAIL
+admin@example.com
+
+DJANGO_ADMIN_PASSWORD
+YourSecurePassword123!
+
+DJANGO_ADMIN_NAME
+Admin
+
 DATABASE_URL
 [Скопируйте Internal Database URL из PostgreSQL сервиса]
 ```
@@ -94,12 +103,23 @@ your-dadata-token
    - Используйте кнопку "Generate" в Render
    - Или сгенерируйте свой: `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"`
 
-4. **После создания сервисов:**
+4. **DJANGO_ADMIN_EMAIL и DJANGO_ADMIN_PASSWORD:**
+   - ⚠️ **ОБЯЗАТЕЛЬНО установите эти переменные!**
+   - Администратор будет создан автоматически при первом деплое
+   - Email будет использоваться как username для входа
+   - Используйте надежный пароль (минимум 8 символов)
+   - **ВАЖНО:** Смените пароль после первого входа!
+
+5. **DJANGO_ADMIN_NAME:**
+   - Опционально, по умолчанию "Admin"
+   - Это имя будет отображаться в админ-панели
+
+6. **После создания сервисов:**
    - Вернитесь и обновите URL с placeholder на реальные
    - Сохраните изменения
    - Сервисы автоматически перезапустятся
 
-5. **HTTPS обязателен:**
+7. **HTTPS обязателен:**
    - Все URL должны начинаться с `https://`
    - Render автоматически предоставляет SSL сертификаты
 
