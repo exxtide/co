@@ -3,7 +3,6 @@ services:
   - type: web
     name: kofeinya-backend
     runtime: python
-    region: frankfurt  # Или другой регион ближе к вам
     plan: free  # Можно изменить на starter или другой план
     buildCommand: cd kofeinya_backend && chmod +x build.sh && ./build.sh
     startCommand: cd kofeinya_backend && gunicorn kofeinya_backend.wsgi:application --bind 0.0.0.0:$PORT
