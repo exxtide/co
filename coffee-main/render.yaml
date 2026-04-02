@@ -34,7 +34,6 @@ services:
   - type: web
     name: kofeinya-frontend
     runtime: static
-    region: frankfurt
     plan: free
     buildCommand: cd ponyatnaya-eda-main && npm install && npm run build
     staticPublishPath: ponyatnaya-eda-main/dist
@@ -49,7 +48,6 @@ services:
 # База данных PostgreSQL
 databases:
   - name: kofeinya-db
-    region: frankfurt
     plan: free
     databaseName: kofeinya
     user: kofeinya
