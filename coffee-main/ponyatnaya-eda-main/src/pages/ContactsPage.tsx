@@ -1,9 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Phone, Mail, Clock, Navigation, MessageCircle, ShoppingBag } from 'lucide-react';
-import { MapSection } from '../components/MapSection';
+import { MapPin, Phone, Mail, Clock, Navigation, MessageCircle } from 'lucide-react';
 
 const ContactsPage: React.FC = () => {
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.2 } },
@@ -15,7 +15,7 @@ const ContactsPage: React.FC = () => {
   };
 
   const contacts = [
-    { icon: MapPin, title: 'Адрес', value: 'г. Ульяновск, ул. Московское шоссе, 100', link: null },
+    { icon: MapPin, title: 'Адрес', value: 'Ульяновск, улица Железной Дивизии, 7', link: null },
     { icon: Phone, title: 'Телефон', value: '+7 (842) 123-45-67', link: 'tel:+78421234567' },
     { icon: Mail, title: 'Email', value: 'info@ponyatnaya-eda.ru', link: 'mailto:info@ponyatnaya-eda.ru' },
     { icon: Clock, title: 'Время работы', value: 'Ежедневно с 9:00 до 22:00', link: null },
@@ -107,7 +107,7 @@ const ContactsPage: React.FC = () => {
                 </h3>
                 <div className="space-y-4 text-gray-600">
                   <p>
-                    <strong className="text-gray-800">На общественном транспорте:</strong> Остановка «Московское шоссе» (автобусы № 2, 5, 10, маршрутки № 15, 27).
+                    <strong className="text-gray-800">На общественном транспорте:</strong> Остановка «улица Железной Дивизии» (автобусы № 2, 5, 10, маршрутки № 15, 27).
                   </p>
                   <p>
                     <strong className="text-gray-800">На автомобиле:</strong> Бесплатная парковка перед зданием. Вход со стороны главного фасада.
@@ -148,22 +148,11 @@ const ContactsPage: React.FC = () => {
 
             {/* Карта */}
             <div className="bg-gray-100 rounded-lg overflow-hidden h-96 relative shadow-md">
-              <iframe
-                src="https://www.openstreetmap.org/export/embed.html?bbox=48.3461%2C54.3051%2C48.4461%2C54.3551&layer=mapnik&marker=54.3301%2C48.3961"
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="Карта Ульяновска"
-              ></iframe>
-              <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-3">
-                <div className="flex items-center space-x-2">
-                  <MapPin size={16} className="text-red-600" />
-                  <span className="text-sm font-medium">Понятная еда</span>
-                </div>
-                <p className="text-xs text-gray-600 mt-1">Московское шоссе, 100</p>
+              <div style={{position:'relative',overflow:'hidden',width:'100%',height:'100%'}}>
+                <a href="https://yandex.ru/maps/org/ponyatnaya_yeda/218896215154/?utm_medium=mapframe&utm_source=maps" style={{color:'#eee',fontSize:'12px',position:'absolute',top:'0px'}}>Понятная Еда</a>
+                <a href="https://yandex.ru/maps/195/ulyanovsk/category/cafe/184106390/?utm_medium=mapframe&utm_source=maps" style={{color:'#eee',fontSize:'12px',position:'absolute',top:'14px'}}>Кафе в Ульяновске</a>
+                <a href="https://yandex.ru/maps/195/ulyanovsk/category/fast_food/184106386/?utm_medium=mapframe&utm_source=maps" style={{color:'#eee',fontSize:'12px',position:'absolute',top:'28px'}}>Быстрое питание в Ульяновске</a>
+                <iframe src="https://yandex.ru/map-widget/v1/?ll=48.387534%2C54.310921&mode=search&oid=218896215154&ol=biz&sctx=ZAAAAAgBEAAaKAoSCUbu6eqOMUhAEWQ6dHreJ0tAEhIJdCMsKuJ0cj8RJ2ppboWwWj8iBgABAgMEBSgKOABAwwFIAWoCcnWdAc3MzD2gAQCoAQC9ARFr7VrCAQby2Oy5rwaCAhfQn9C%2B0L3Rj9GC0L3QsNGPINC10LTQsIoCAJICAJoCDGRlc2t0b3AtbWFwcw%3D%3D&sll=48.387405%2C54.310921&sspn=0.000909%2C0.000329&text=%D0%9F%D0%BE%D0%BD%D1%8F%D1%82%D0%BD%D0%B0%D1%8F%20%D0%B5%D0%B4%D0%B0&z=21" width="100%" height="100%" frameBorder="0" allowFullScreen={true} style={{position:'relative'}}></iframe>
               </div>
             </div>
           </div>

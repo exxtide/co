@@ -4,7 +4,7 @@ import axios, { type AxiosInstance, isAxiosError } from 'axios';
 const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || 'http://127.0.0.1:8000';
 const API_BASE = `${API_ORIGIN.replace(/\/$/, '')}/api`;
 
-const api: AxiosInstance = axios.create({
+export const api: AxiosInstance = axios.create({
   baseURL: API_BASE,
   headers: {
     'Content-Type': 'application/json',
@@ -85,10 +85,23 @@ export interface Product {
 
 export interface PromotionCard {
   id: string;
+  slug: string;
   title: string;
   description: string;
   image_url?: string;
   created_at?: string;
+  /** Условия акции (например, "При покупке от 2000₽") */
+  conditions?: string;
+  /** Пользовательское соглашение (HTML или текст) */
+  terms?: string;
+  /** PDF файл с подробными условиями акции */
+  pdf_file_url?: string;
+  /** Текст ссылки на PDF (например: "Подробнее про акцию") */
+  pdf_link_text?: string;
+  /** Изображение для шапки (рекомендуется 1920x600 или 16:5) */
+  banner_image_url?: string;
+  /** Дата окончания акции */
+  end_date?: string;
 }
 
 export interface BlogPostCard {
@@ -162,10 +175,21 @@ type DjangoProduct = {
 
 function mapProduct(p: DjangoProduct): Product {
   const price = typeof p.price === 'string' ? parseFloat(p.price) : p.price;
+  // Разделяем название и вес (формат: "Название (XXX г)" или "Название XXX г")
+  const nameWithWeight = p.name_with_weight;
+  // Парсим вес из конца строки (формат: "Название (XXX г)" или "Название XXX г")
+  // Сначала ищем вес в скобках в конце: (400 г), (500г), (1 кг)
+  const bracketMatch = nameWithWeight.match(/\s*\((\d+[\s\d]*\s*(?:г|кг|мл|л))\)\s*$/i);
+  // Потом ищем вес без скобок в конце: 400 г, 500г, 1 кг
+  const plainMatch = nameWithWeight.match(/\s+(\d+[\s\d]*\s*(?:г|кг|мл|л))\s*$/i);
+  const weightMatch = bracketMatch || plainMatch;
+  let weight = weightMatch ? weightMatch[1].trim() : undefined;
+  let name = weightMatch ? nameWithWeight.replace(weightMatch[0], '').trim() : nameWithWeight;
   return {
     id: String(p.id),
     slug: p.slug,
-    name: p.name_with_weight,
+    name,
+    weight,
     description: p.composition || undefined,
     price: Number.isFinite(price) ? price : 0,
     image_url: resolveMediaUrl(p.image),
@@ -220,15 +244,28 @@ type DjangoPromotion = {
   description: string;
   image: string | null;
   created_at?: string;
+  conditions?: string;
+  terms?: string;
+  pdf_file?: string | null;
+  pdf_link_text?: string;
+  banner_image?: string | null;
+  end_date?: string;
 };
 
 function mapPromotionCard(p: DjangoPromotion): PromotionCard {
   return {
     id: String(p.id),
+    slug: p.slug || String(p.id),
     title: p.name,
     description: p.description,
     image_url: resolveMediaUrl(p.image),
     created_at: p.created_at,
+    conditions: p.conditions,
+    terms: p.terms,
+    pdf_file_url: resolveMediaUrl(p.pdf_file),
+    pdf_link_text: p.pdf_link_text,
+    banner_image_url: resolveMediaUrl(p.banner_image),
+    end_date: p.end_date,
   };
 }
 
@@ -281,6 +318,16 @@ function mapOrder(o: Omit<OrderRecord, 'id'> & { id: string | number }): OrderRe
     ...o,
     id: String(o.id),
   };
+}
+
+export interface DishOfTheDay {
+  id: string;
+  product: Product;
+  old_price?: number;
+  sale_price?: number;
+  active_from?: string;
+  active_until?: string;
+  is_active: boolean;
 }
 
 export interface CreateOrderPayload {
@@ -470,11 +517,27 @@ export const apiService = {
     return rows.map(mapPromotionCard);
   },
 
-  adminCreatePromotion: async (payload: { name: string; description: string; image: File }): Promise<void> => {
+  adminCreatePromotion: async (payload: {
+    name: string;
+    description: string;
+    image: File;
+    conditions?: string;
+    terms?: string;
+    pdf_file?: File;
+    pdf_link_text?: string;
+    banner_image?: File;
+    end_date?: string;
+  }): Promise<void> => {
     const formData = new FormData();
     formData.append('name', payload.name);
     formData.append('description', payload.description);
     formData.append('image', payload.image);
+    if (payload.conditions) formData.append('conditions', payload.conditions);
+    if (payload.terms) formData.append('terms', payload.terms);
+    if (payload.pdf_file) formData.append('pdf_file', payload.pdf_file);
+    if (payload.pdf_link_text) formData.append('pdf_link_text', payload.pdf_link_text);
+    if (payload.banner_image) formData.append('banner_image', payload.banner_image);
+    if (payload.end_date) formData.append('end_date', payload.end_date);
     await api.post('/promotions/', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
@@ -482,20 +545,35 @@ export const apiService = {
 
   adminUpdatePromotion: async (
     slug: string,
-    payload: { name?: string; description?: string; image?: File | null | undefined },
+    payload: {
+      name?: string;
+      description?: string;
+      image?: File | null | undefined;
+      conditions?: string;
+      terms?: string;
+      pdf_file?: File | null | undefined;
+      pdf_link_text?: string;
+      banner_image?: File | null | undefined;
+      end_date?: string;
+    },
   ): Promise<void> => {
-    const hasFile = payload.image instanceof File;
-    if (hasFile) {
-      const formData = new FormData();
-      if (payload.name != null) formData.append('name', payload.name);
-      if (payload.description != null) formData.append('description', payload.description);
-      formData.append('image', payload.image as File);
-      await api.patch(`/promotions/${encodeURIComponent(slug)}/`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      return;
-    }
-    await api.patch(`/promotions/${encodeURIComponent(slug)}/`, payload);
+    const formData = new FormData();
+    if (payload.name != null) formData.append('name', payload.name);
+    if (payload.description != null) formData.append('description', payload.description);
+    if (payload.image instanceof File) formData.append('image', payload.image);
+    if (payload.conditions != null) formData.append('conditions', payload.conditions);
+    if (payload.terms != null) formData.append('terms', payload.terms);
+    if (payload.pdf_file instanceof File) formData.append('pdf_file', payload.pdf_file);
+    if (payload.pdf_link_text != null) formData.append('pdf_link_text', payload.pdf_link_text);
+    if (payload.banner_image instanceof File) formData.append('banner_image', payload.banner_image);
+    if (payload.end_date != null) formData.append('end_date', payload.end_date);
+    await api.patch(`/promotions/${encodeURIComponent(slug)}/`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  adminDeletePromotion: async (slug: string): Promise<void> => {
+    await api.delete(`/promotions/${encodeURIComponent(slug)}/`);
   },
 
   adminCreateProduct: async (payload: AdminProductPayload) => {
@@ -594,5 +672,49 @@ export const apiService = {
       params: { query },
     });
     return Array.isArray(data?.suggestions) ? data!.suggestions : [];
+  },
+
+  // Блюдо дня
+  getDishOfTheDay: async (): Promise<DishOfTheDay | null> => {
+    try {
+      const { data } = await api.get<DishOfTheDay>('/dish-of-the-day/');
+      return data;
+    } catch {
+      return null;
+    }
+  },
+
+  adminGetDishOfTheDay: async (): Promise<DishOfTheDay | null> => {
+    try {
+      const { data } = await api.get<DishOfTheDay>('/admin/dish-of-the-day/');
+      return data;
+    } catch {
+      return null;
+    }
+  },
+
+  adminSetDishOfTheDay: async (payload: {
+    product_id: number;
+    old_price?: number;
+    sale_price?: number;
+    active_from?: string;
+    active_until?: string;
+  }): Promise<void> => {
+    await api.post('/admin/dish-of-the-day/', payload);
+  },
+
+  adminUpdateDishOfTheDay: async (payload: {
+    product_id?: number;
+    old_price?: number;
+    sale_price?: number;
+    active_from?: string;
+    active_until?: string;
+    is_active?: boolean;
+  }): Promise<void> => {
+    await api.patch('/admin/dish-of-the-day/', payload);
+  },
+
+  adminDeleteDishOfTheDay: async (): Promise<void> => {
+    await api.delete('/admin/dish-of-the-day/');
   },
 };

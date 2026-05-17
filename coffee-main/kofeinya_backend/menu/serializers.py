@@ -4,7 +4,7 @@ from django.db import transaction
 from rest_framework import serializers
 from PIL import Image, UnidentifiedImageError
 
-from .models import Category, Order, OrderItem, Product, Promotion, Subcategory
+from .models import Category, DishOfTheDay, Order, OrderItem, Product, Promotion, Subcategory
 
 
 MAX_IMAGE_BYTES = 5 * 1024 * 1024  # 5MB
@@ -34,13 +34,51 @@ def _validate_image_upload(file_obj):
 
 
 class PromotionSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+    banner_image_url = serializers.SerializerMethodField()
+    pdf_file_url = serializers.SerializerMethodField()
+
+    def get_image_url(self, obj):
+        if obj.image:
+            return self.context["request"].build_absolute_uri(obj.image.url)
+        return None
+
+    def get_banner_image_url(self, obj):
+        if obj.banner_image:
+            return self.context["request"].build_absolute_uri(obj.banner_image.url)
+        return None
+
+    def get_pdf_file_url(self, obj):
+        if obj.pdf_file:
+            return self.context["request"].build_absolute_uri(obj.pdf_file.url)
+        return None
+
     def validate_image(self, value):
+        return _validate_image_upload(value)
+
+    def validate_banner_image(self, value):
         return _validate_image_upload(value)
 
     class Meta:
         model = Promotion
-        fields = ("id", "name", "slug", "image", "description", "created_at")
-        read_only_fields = ("slug", "created_at")
+        fields = (
+            "id",
+            "name",
+            "slug",
+            "image",
+            "image_url",
+            "description",
+            "conditions",
+            "terms",
+            "banner_image",
+            "banner_image_url",
+            "pdf_file",
+            "pdf_file_url",
+            "pdf_link_text",
+            "end_date",
+            "created_at",
+        )
+        read_only_fields = ("slug", "created_at", "image_url", "banner_image_url", "pdf_file_url")
 
 
 class SubcategorySerializer(serializers.ModelSerializer):
@@ -72,6 +110,12 @@ class ProductSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False,
     )
+    image_url = serializers.SerializerMethodField()
+
+    def get_image_url(self, obj):
+        if obj.image:
+            return self.context["request"].build_absolute_uri(obj.image.url)
+        return None
 
     class Meta:
         model = Product
@@ -81,6 +125,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "slug",
             "price",
             "image",
+            "image_url",
             "is_available",
             "created_at",
             "promotion",
@@ -89,7 +134,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "category",
             "subcategory",
         )
-        read_only_fields = ("slug", "created_at")
+        read_only_fields = ("slug", "created_at", "image_url")
 
     def validate_image(self, value):
         return _validate_image_upload(value)
@@ -269,3 +314,35 @@ class OrderStatusUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ("status",)
+
+
+class DishOfTheDaySerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
+    product_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = DishOfTheDay
+        fields = (
+            "id",
+            "product",
+            "product_id",
+            "old_price",
+            "sale_price",
+            "active_from",
+            "active_until",
+            "is_active",
+            "created_at",
+        )
+        read_only_fields = ("created_at",)
+
+    def validate(self, attrs):
+        # Проверяем, что продукт существует
+        product_id = attrs.get("product_id")
+        if product_id:
+            try:
+                Product.objects.get(pk=product_id)
+            except Product.DoesNotExist:
+                raise serializers.ValidationError(
+                    {"product_id": "Товар не найден."}
+                )
+        return attrs

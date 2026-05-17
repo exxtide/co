@@ -60,7 +60,10 @@ def login_view(request):
     ser.is_valid(raise_exception=True)
     email = ser.validated_data["email"].lower().strip()
     password = ser.validated_data["password"]
+    # Ищем по username (для зарегистрированных через API) или по email (для суперпользователей)
     user = User.objects.filter(username__iexact=email).first()
+    if user is None:
+        user = User.objects.filter(email__iexact=email).first()
     if user is None:
         return Response(
             {"detail": "Неверный email или пароль."},

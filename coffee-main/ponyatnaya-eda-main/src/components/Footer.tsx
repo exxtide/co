@@ -35,7 +35,7 @@ export const Footer: React.FC = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <MapPin size={18} className="text-red-500" />
-                <span>г. Ульяновск, ул. Московское шоссе, 100</span>
+                <span>Ульяновск, улица Железной Дивизии, 7</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Clock size={18} className="text-red-500" />
@@ -48,7 +48,7 @@ export const Footer: React.FC = () => {
           <div>
             <h4 className="text-lg font-semibold mb-4">Быстрые ссылки</h4>
             <ul className="space-y-2">
-              <li><Link to="/catalog" className="text-gray-300 hover:text-white transition-colors">Каталог</Link></li>
+              <li><Link to="/catalog" className="text-gray-300 hover:text-white transition-colors">Меню</Link></li>
               <li><Link to="/about" className="text-gray-300 hover:text-white transition-colors">О нас</Link></li>
               <li><Link to="/delivery" className="text-gray-300 hover:text-white transition-colors">Доставка</Link></li>
               <li><Link to="/contacts" className="text-gray-300 hover:text-white transition-colors">Контакты</Link></li>

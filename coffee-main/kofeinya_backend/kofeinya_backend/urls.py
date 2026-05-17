@@ -5,12 +5,15 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from menu.views import (
+    admin_dish_of_the_day,
     CategoryViewSet,
     dadata_address_suggest,
+    dish_of_the_day,
     OrderViewSet,
     ProductViewSet,
     PromotionViewSet,
     SubcategoryViewSet,
+    yandex_reviews,
 )
 
 router = DefaultRouter()
@@ -25,6 +28,9 @@ urlpatterns = [
     path("api/", include("accounts.urls")),
     path("api/", include(router.urls)),
     path("api/dadata/address-suggest/", dadata_address_suggest),
+    path("api/dish-of-the-day/", dish_of_the_day),
+    path("api/admin/dish-of-the-day/", admin_dish_of_the_day),
+    path("api/yandex-reviews/", yandex_reviews),
 ]
 
 if settings.DEBUG:

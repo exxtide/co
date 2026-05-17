@@ -45,7 +45,7 @@ const CatalogPage: React.FC = () => {
   return (
     <div className="py-12 bg-gray-50 min-h-screen">
       <div className="container mx-auto px-4">
-        <h1 className="text-3xl font-bold text-center mb-8">Каталог</h1>
+        <h1 className="text-3xl font-bold text-center mb-8">Меню</h1>
 
         {/* Фильтр по категориям */}
         <div className="flex flex-wrap justify-center gap-3 mb-10">

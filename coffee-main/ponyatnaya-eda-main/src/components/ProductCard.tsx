@@ -31,28 +31,35 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       transition={{ duration: 0.4 }}
       className="product-card bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 flex flex-col h-full"
     >
-      <Link to={`/product/${product.slug}`} className="block relative pb-[100%] bg-gray-100 overflow-hidden">
+      <Link to={`/product/${product.slug}`} className="block relative pb-[100%] bg-gray-100 overflow-hidden p-3">
         {product.image_url ? (
           <motion.img
             whileHover={{ scale: 1.05 }}
             transition={{ duration: 0.3 }}
             src={product.image_url}
             alt={product.name}
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-3 w-[calc(100%-24px)] h-[calc(100%-24px)] object-cover rounded-lg border-2 border-amber-300"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+          <div className="absolute inset-3 flex items-center justify-center text-gray-400 bg-gray-50 rounded-lg border-2 border-amber-300">
             Нет фото
           </div>
         )}
       </Link>
 
       <div className="p-4 flex flex-col flex-grow">
-        <Link to={`/product/${product.slug}`}>
-          <h3 className="font-bold text-lg mb-1 line-clamp-2 hover:text-red-600 transition-colors">
-            {product.name}
+        <div className="flex justify-between items-center w-full mb-1">
+          <h3 className="font-bold text-lg hover:text-red-600 transition-colors truncate text-left">
+            <Link to={`/product/${product.slug}`}>
+              {product.name}
+            </Link>
           </h3>
-        </Link>
+          {product.weight && (
+            <span className="text-gray-500 text-sm whitespace-nowrap ml-2 text-right">
+              {product.weight}
+            </span>
+          )}
+        </div>
         {product.description && (
           <p className="text-gray-600 text-sm mb-3 line-clamp-3">{product.description}</p>
         )}

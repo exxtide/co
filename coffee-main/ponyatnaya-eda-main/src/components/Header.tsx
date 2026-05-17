@@ -30,16 +30,19 @@ export const Header: React.FC<HeaderProps> = ({ onAdminClick }) => {
               <img 
                 src={logo} 
                 alt="Понятная еда" 
-                className="h-28 md:h-30 w-auto object-contain" 
+                className="h-20 md:h-32 w-auto object-contain max-w-[180px] md:max-w-[240px]" 
               />
             </Link>
 
             <nav className="hidden md:flex items-center space-x-8">
-              <Link to="/catalog" className="text-gray-700 hover:text-red-600 transition-colors">Каталог</Link>
+              <Link to="/catalog" className="text-gray-700 hover:text-red-600 transition-colors">Меню</Link>
               <Link to="/about" className="text-gray-700 hover:text-red-600 transition-colors">О нас</Link>
               <Link to="/delivery" className="text-gray-700 hover:text-red-600 transition-colors">Доставка</Link>
               <Link to="/contacts" className="text-gray-700 hover:text-red-600 transition-colors">Контакты</Link>
-              <Link to="/promotions" className="text-gray-700 hover:text-red-600 transition-colors">Акции</Link>
+              <Link to="/promotions" className="relative text-gray-700 hover:text-red-600 transition-colors font-semibold">
+                Акции
+                <span className="absolute -top-1 -right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+              </Link>
               <Link to="/custom-order" className="text-gray-700 hover:text-red-600 transition-colors">На заказ</Link>
             </nav>
 
@@ -134,11 +137,14 @@ export const Header: React.FC<HeaderProps> = ({ onAdminClick }) => {
                 className="md:hidden border-t border-gray-200 py-4 overflow-hidden"
               >
                 <nav className="flex flex-col space-y-4">
-                  <Link to="/catalog" onClick={() => setMobileMenuOpen(false)}>Каталог</Link>
+                  <Link to="/catalog" onClick={() => setMobileMenuOpen(false)}>Меню</Link>
                   <Link to="/about" onClick={() => setMobileMenuOpen(false)}>О нас</Link>
                   <Link to="/delivery" onClick={() => setMobileMenuOpen(false)}>Доставка</Link>
                   <Link to="/contacts" onClick={() => setMobileMenuOpen(false)}>Контакты</Link>
-                  <Link to="/promotions" onClick={() => setMobileMenuOpen(false)}>Акции</Link>
+                  <Link to="/promotions" onClick={() => setMobileMenuOpen(false)} className="relative inline-block font-semibold">
+                    Акции
+                    <span className="absolute -top-1 -right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                  </Link>
                   <Link to="/custom-order" onClick={() => setMobileMenuOpen(false)}>На заказ</Link>
                   {user?.is_staff && onAdminClick && (
                     <button onClick={() => { onAdminClick(); setMobileMenuOpen(false); }}>Админка</button>

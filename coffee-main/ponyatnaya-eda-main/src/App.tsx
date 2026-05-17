@@ -13,6 +13,7 @@ import AboutPage from './pages/AboutPage';
 import DeliveryPage from './pages/DeliveryPage';
 import ContactsPage from './pages/ContactsPage';
 import PromotionsPage from './pages/PromotionsPage';
+import PromotionDetailPage from './pages/PromotionDetailPage';
 import CustomOrderPage from './pages/CustomOrderPage';
 import AccountPage from './pages/AccountPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
@@ -62,6 +63,7 @@ function AppContent() {
             <Route path="/delivery" element={<AnimatedPage><DeliveryPage /></AnimatedPage>} />
             <Route path="/contacts" element={<AnimatedPage><ContactsPage /></AnimatedPage>} />
             <Route path="/promotions" element={<AnimatedPage><PromotionsPage /></AnimatedPage>} />
+            <Route path="/promotions/:id" element={<AnimatedPage><PromotionDetailPage /></AnimatedPage>} />
             <Route path="/custom-order" element={<AnimatedPage><CustomOrderPage /></AnimatedPage>} />
             <Route path="/account" element={<AnimatedPage><AccountPage /></AnimatedPage>} />
             <Route path="/verify-email" element={<AnimatedPage><VerifyEmailPage /></AnimatedPage>} />

@@ -1,6 +1,5 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface Category {
@@ -14,16 +13,18 @@ interface MenuSliderProps {
   categories: Category[];
 }
 
-export const MenuSlider: React.FC<MenuSliderProps> = ({ categories }) => {
-  const navigate = useNavigate();
-  const scrollRef = useRef<HTMLDivElement>(null);
+// Иконки для категорий
+const categoryIcons: Record<string, string> = {
+  'Супы': '🍲',
+  'Горячее': '🍗',
+  'Салаты': '🥗',
+  'Выпечка': '🥐',
+  'Колобки': '🟡',
+  'Напитки': '☕️',
+};
 
-  const scroll = (direction: 'left' | 'right') => {
-    if (scrollRef.current) {
-      const scrollAmount = direction === 'left' ? -320 : 320;
-      scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-    }
-  };
+export const MenuSlider: React.FCC<MenuSliderProps> = ({ categories }) => {
+  const navigate = useNavigate();
 
   const handleCategoryClick = (categoryId: string) => {
     navigate(`/catalog?category=${categoryId}`);
@@ -34,7 +35,7 @@ export const MenuSlider: React.FC<MenuSliderProps> = ({ categories }) => {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.05,
+        staggerChildren: 0.1,
       },
     },
   };
@@ -44,65 +45,65 @@ export const MenuSlider: React.FC<MenuSliderProps> = ({ categories }) => {
     visible: { opacity: 1, y: 0 },
   };
 
+  // Берем только первые 6 категорий
+  const displayCategories = categories.slice(0, 6);
+
   return (
-    <div className="w-full bg-white py-8">
+    <div className="w-full bg-white py-12">
       <div className="container mx-auto px-4">
-        <h2 className="text-4xl md:text-5xl font-bold text-center text-gray-800 mb-8">
-          МЕНЮ
-        </h2>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-10"
+        >
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+            МЕНЮ
+          </h2>
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+            Выберите категорию и откройте для себя вкусные блюда
+          </p>
+        </motion.div>
 
-        <div className="relative">
-          <button
-            onClick={() => scroll('left')}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 rounded-full p-2 shadow-md hover:bg-white transition-colors md:flex hidden items-center justify-center ml-[-12px]"
-          >
-            <ChevronLeft size={24} className="text-gray-600" />
-          </button>
-          <button
-            onClick={() => scroll('right')}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 rounded-full p-2 shadow-md hover:bg-white transition-colors md:flex hidden items-center justify-center mr-[-12px]"
-          >
-            <ChevronRight size={24} className="text-gray-600" />
-          </button>
-
-          <motion.div
-            ref={scrollRef}
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
-            className="flex overflow-x-auto scrollbar-hide space-x-6 py-4 scroll-smooth px-8 md:px-12"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
-            {categories.map((category) => (
-              <motion.div
-                key={category.id}
-                variants={itemVariants}
-                className="flex-shrink-0 w-44 md:w-56 cursor-pointer group"
-                onClick={() => handleCategoryClick(category.id)}
-              >
-                <div className="relative aspect-square rounded-xl overflow-hidden shadow-md transition-transform duration-300 group-hover:scale-105">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto"
+        >
+          {displayCategories.map((category) => (
+            <motion.div
+              key={category.id}
+              variants={itemVariants}
+              className="cursor-pointer group"
+              onClick={() => handleCategoryClick(category.id)}
+            >
+              <div className="bg-gray-50 rounded-2xl overflow-hidden shadow-md transition-all duration-300 group-hover:shadow-xl group-hover:scale-[1.02] p-3">
+                <div className="relative aspect-[4/3] rounded-xl overflow-hidden">
                   {category.image_url ? (
                     <img
                       src={category.image_url}
                       alt={category.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover border-2 border-amber-300 rounded-lg"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                      <span className="text-gray-500 text-center px-2">Фото</span>
+                    <div className="w-full h-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center border-2 border-amber-300 rounded-lg">
+                      <span className="text-5xl">{categoryIcons[category.name] || '🍽️'}</span>
                     </div>
                   )}
                 </div>
-                <div className="mt-3 text-center">
-                  <span className="text-gray-800 font-medium text-base md:text-lg">
+                <div className="py-4 text-center">
+                  <span className="text-xl md:text-2xl mr-2">{categoryIcons[category.name] || '🍽️'}</span>
+                  <span className="text-gray-800 font-semibold text-lg md:text-xl">
                     {category.name}
                   </span>
                 </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
       </div>
     </div>
   );

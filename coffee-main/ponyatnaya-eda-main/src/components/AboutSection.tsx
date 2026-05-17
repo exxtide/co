@@ -4,22 +4,22 @@ import { Heart, Award, Clock, Truck } from 'lucide-react'
 const features = [
   {
     icon: Heart,
-    title: 'Готовим с любовью',
+    title: 'Домашние блюда',
     description: 'Каждый торт создается с особым вниманием к деталям и качеству ингредиентов'
   },
   {
     icon: Award,
-    title: 'Высокое качество',
+    title: 'Понятные цены',
     description: 'Используем только свежие и натуральные продукты от проверенных поставщиков'
   },
   {
     icon: Clock,
-    title: 'Быстро и вовремя',
+    title: 'Свежая выпечка',
     description: 'Соблюдаем сроки доставки и всегда информируем о готовности заказа'
   },
   {
     icon: Truck,
-    title: 'Удобная доставка',
+    title: 'Еда на каждый день',
     description: 'Доставляем по всему Ульяновску в удобное для вас время'
   }
 ]
@@ -29,23 +29,44 @@ export const AboutSection: React.FC = () => {
     <section id="about" className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">О нашей компании</h2>
-          <p className="text-gray-600 max-w-3xl mx-auto text-lg">
-            Мы — команда энтузиастов, которая уже более 5 лет радует жителей Ульяновска 
-            вкусными тортами и десертами. Наша цель — сделать каждое ваше событие особенным.
-          </p>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 whitespace-pre-line">Понятная еда
+в самом центре Ульяновска</h2>
+          <p className="text-gray-600 max-w-3xl mx-auto text-lg whitespace-pre-line">
+Домашние блюда, свежая выпечка
+и первая в городе Колобочная №1</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-          {features.map((feature, index) => (
-            <div key={index} className="text-center">
-              <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <feature.icon size={32} className="text-white" />
+        {/* Что такое «Понятная еда»? - Большой блок */}
+        <div className="bg-white rounded-3xl shadow-xl p-8 md:p-12 mb-16">
+          <div className="text-center mb-10">
+            <h3 className="inline-block text-2xl md:text-3xl font-bold text-gray-800 bg-red-50 rounded-full px-8 py-4">
+              Что такое «Понятная еда»?
+            </h3>
+            <p className="text-xl font-medium text-gray-700 mt-6">
+              Это место, где всё просто:
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
+            {features.map((feature, index) => (
+              <div key={index} className="text-center">
+                <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <feature.icon size={32} className="text-white" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                <p className="text-gray-600">{feature.description}</p>
               </div>
-              <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-              <p className="text-gray-600">{feature.description}</p>
-            </div>
-          ))}
+            ))}
+          </div>
+
+          {/* Финальный текст */}
+          <div className="text-center max-w-3xl mx-auto pt-8 border-t border-gray-100">
+            <p className="text-xl text-gray-700 leading-relaxed whitespace-pre-line">
+              Мы создаём современное городское кафе,
+куда можно зайти на обед,
+ужин или просто взять что-то вкусное с собой.
+            </p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -83,13 +104,12 @@ export const AboutSection: React.FC = () => {
             </div>
           </div>
 
-          <div className="relative">
+          <div className="relative bg-gray-50 rounded-2xl p-4">
             <img
               src="https://images.pexels.com/photos/1638280/pexels-photo-1638280.jpeg?auto=compress&cs=tinysrgb&w=600"
               alt="Наша кондитерская"
-              className="rounded-lg shadow-xl w-full"
+              className="rounded-xl shadow-lg w-full border-2 border-amber-300"
             />
-            <div className="absolute inset-0 bg-gradient-to-tr from-red-600/20 to-transparent rounded-lg"></div>
           </div>
         </div>
 
@@ -108,6 +128,7 @@ export const AboutSection: React.FC = () => {
             <div className="text-gray-600">Лет опыта</div>
           </div>
         </div>
+
       </div>
     </section>
   )

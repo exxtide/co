@@ -27,6 +27,12 @@ class Promotion(models.Model):
     slug = models.SlugField(max_length=255, unique=True, db_index=True, blank=True)
     image = models.ImageField(upload_to="promotions/", verbose_name="Картинка")
     description = models.TextField(verbose_name="Описание")
+    conditions = models.TextField(verbose_name="Условия акции", blank=True, default="")
+    terms = models.TextField(verbose_name="Пользовательское соглашение", blank=True, default="")
+    banner_image = models.ImageField(upload_to="promotions/banners/", verbose_name="Изображение шапки", null=True, blank=True)
+    pdf_file = models.FileField(upload_to="promotions/pdf/", verbose_name="PDF файл", null=True, blank=True)
+    pdf_link_text = models.CharField(max_length=255, verbose_name="Текст ссылки на PDF", blank=True, default="")
+    end_date = models.DateTimeField(verbose_name="Дата окончания акции", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
 
     class Meta:
@@ -262,3 +268,51 @@ class OrderItem(models.Model):
 
     def __str__(self) -> str:
         return f"{self.product} × {self.quantity}"
+
+
+class DishOfTheDay(models.Model):
+    """Блюдо дня - специальное предложение на определенный период."""
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="dish_of_day",
+        verbose_name="Блюдо",
+    )
+    old_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Старая цена (для скидки)",
+    )
+    sale_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Цена со скидкой",
+    )
+    active_from = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Активно с",
+    )
+    active_until = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Активно до",
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Активно",
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+
+    class Meta:
+        verbose_name = "Блюдо дня"
+        verbose_name_plural = "Блюда дня"
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"Блюдо дня: {self.product.name_with_weight}"

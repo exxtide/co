@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Heart, Award, Clock, Truck, Users, Coffee, Star, Shield } from 'lucide-react';
+import { Heart, Award, Clock, Truck, Users, Coffee, Shield } from 'lucide-react';
+import YandexReviews from '../components/YandexReviews';
 
 const AboutPage: React.FC = () => {
   const stats = [
@@ -17,11 +18,7 @@ const AboutPage: React.FC = () => {
     { name: 'Дмитрий Козлов', role: 'Руководитель доставки', image: 'https://images.pexels.com/photos/3778210/pexels-photo-3778210.jpeg?auto=compress&cs=tinysrgb&w=400&h=400&fit=crop' },
   ];
 
-  const reviews = [
-    { name: 'Ольга', text: 'Заказывала торт на день рождения — невероятно вкусно и красиво! Спасибо команде!', rating: 5 },
-    { name: 'Алексей', text: 'Доставка вовремя, торт свежий, состав натуральный. Рекомендую!', rating: 5 },
-    { name: 'Екатерина', text: 'Очень приятно удивлена качеством. Обязательно закажу ещё.', rating: 5 },
-  ];
+
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -210,7 +207,7 @@ const AboutPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Отзывы */}
+      {/* Отзывы Яндекс */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <motion.div
@@ -220,30 +217,14 @@ const AboutPage: React.FC = () => {
             className="text-center mb-12"
           >
             <h2 className="text-3xl font-bold text-gray-800 mb-4">Что говорят наши клиенты</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Делимся впечатлениями наших довольных покупателей
-            </p>
           </motion.div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {reviews.map((review, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-                className="bg-gray-50 rounded-lg p-6 shadow-md"
-              >
-                <div className="flex mb-4">
-                  {[...Array(review.rating)].map((_, i) => (
-                    <Star key={i} size={18} className="text-yellow-400 fill-current" />
-                  ))}
-                </div>
-                <p className="text-gray-700 mb-4">"{review.text}"</p>
-                <p className="font-semibold text-gray-800">{review.name}</p>
-              </motion.div>
-            ))}
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <YandexReviews />
+          </motion.div>
         </div>
       </section>
 

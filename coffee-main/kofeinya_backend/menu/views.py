@@ -2,14 +2,21 @@ from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view, permission_classes
 from django.conf import settings
+from django.db import models
+from django.utils import timezone
 from datetime import datetime
 import json
 from urllib import request as urllib_request
+import urllib.request
+import ssl
 
-from .models import Category, Order, Product, Promotion, Subcategory
+from django.utils import timezone
+
+from .models import Category, DishOfTheDay, Order, Product, Promotion, Subcategory
 from .permissions import IsStaffUser, ReadOnlyOrStaff
 from .serializers import (
     CategorySerializer,
+    DishOfTheDaySerializer,
     OrderCreateSerializer,
     OrderListSerializer,
     OrderStatusUpdateSerializer,
@@ -192,3 +199,137 @@ def dadata_address_suggest(request):
             suggestions.append(v.strip())
 
     return Response({"suggestions": suggestions[:10]})
+
+
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def dish_of_the_day(request):
+    """Публичное API для получения текущего блюда дня."""
+    now = timezone.now()
+    dish = DishOfTheDay.objects.filter(
+        is_active=True,
+    ).filter(
+        models.Q(active_from__isnull=True) | models.Q(active_from__lte=now)
+    ).filter(
+        models.Q(active_until__isnull=True) | models.Q(active_until__gte=now)
+    ).select_related("product").first()
+
+    if not dish:
+        return Response(None, status=status.HTTP_204_NO_CONTENT)
+
+    serializer = DishOfTheDaySerializer(dish, context={"request": request})
+    return Response(serializer.data)
+
+
+@api_view(["GET", "POST", "PATCH", "DELETE"])
+@permission_classes([IsStaffUser])
+def admin_dish_of_the_day(request):
+    """Админ API для управления блюдом дня."""
+    if request.method == "GET":
+        dish = DishOfTheDay.objects.select_related("product").first()
+        if not dish:
+            return Response(None, status=status.HTTP_204_NO_CONTENT)
+        serializer = DishOfTheDaySerializer(dish, context={"request": request})
+        return Response(serializer.data)
+
+    elif request.method == "POST":
+        # Удаляем старое блюдо дня если есть
+        DishOfTheDay.objects.all().delete()
+
+        serializer = DishOfTheDaySerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    elif request.method == "PATCH":
+        dish = DishOfTheDay.objects.first()
+        if not dish:
+            return Response(
+                {"detail": "Блюдо дня не найдено."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = DishOfTheDaySerializer(dish, data=request.data, partial=True, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    elif request.method == "DELETE":
+        DishOfTheDay.objects.all().delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def yandex_reviews(request):
+    """
+    Получение отзывов с Яндекс.Карт для организации.
+    Фильтрует только отзывы с 5 звёздами.
+    """
+    # ID организации в Яндекс.Картах (Понятная Еда)
+    org_id = "218896215154"
+    
+    # Параметры запроса
+    url = f"https://yandex.ru/maps/api/ugcpost/getReviews?ajax=1&businessId={org_id}&pageSize=100"
+    
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Referer": f"https://yandex.ru/maps/org/ponyatnaya_yeda/{org_id}/",
+    }
+    
+    try:
+        # Создаем контекст SSL для обхода проверки сертификата (для разработки)
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=10, context=ssl_context) as resp:
+            raw = resp.read().decode("utf-8")
+            data = json.loads(raw)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Yandex API error: {e}")
+        # Если API Яндекса недоступен, возвращаем пустой список
+        return Response({
+            "reviews": [],
+            "total_count": 0,
+            "org_name": "Понятная Еда",
+            "org_url": f"https://yandex.ru/maps/org/ponyatnaya_yeda/{org_id}/",
+        })
+
+    # Проверяем структуру ответа
+    if not isinstance(data, dict):
+        return Response({
+            "reviews": [],
+            "total_count": 0,
+            "org_name": "Понятная Еда",
+            "org_url": f"https://yandex.ru/maps/org/ponyatnaya_yeda/{org_id}/",
+        })
+    
+    # Извлекаем отзывы из ответа
+    reviews_data = data.get("data", {}).get("reviews", [])
+    
+    # Фильтруем только 5-звёздочные отзывы
+    five_star_reviews = []
+    for review in reviews_data:
+        rating = review.get("rating", 0)
+        if rating == 5:
+            five_star_reviews.append({
+                "id": review.get("reviewId"),
+                "author": review.get("author", {}).get("name", "Аноним"),
+                "avatar": review.get("author", {}).get("avatarUrl"),
+                "rating": rating,
+                "text": review.get("text", ""),
+                "date": review.get("updatedTime", review.get("createdTime")),
+                "likes": review.get("reactions", {}).get("likes", 0),
+            })
+    
+    return Response({
+        "reviews": five_star_reviews,
+        "total_count": len(five_star_reviews),
+        "org_name": "Понятная Еда",
+        "org_url": f"https://yandex.ru/maps/org/ponyatnaya_yeda/{org_id}/",
+    })

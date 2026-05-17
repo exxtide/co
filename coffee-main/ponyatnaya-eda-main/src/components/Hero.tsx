@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const slides = [
   {
-    title: 'Свежие торты каждый день',
-    subtitle: 'Приготовлены с любовью из натуральных продуктов',
+    title: 'Понятная еда\nв самом центре Ульяновска',
+    subtitle: 'Домашние блюда, свежая выпечка\nи первая в городе Колобочная №1',
     image: 'https://images.pexels.com/photos/1721932/pexels-photo-1721932.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
     cta: 'Заказать сейчас'
   },
@@ -66,10 +66,10 @@ export const Hero: React.FC = () => {
                 transition={{ delay: 0.2, duration: 0.6 }}
                 className="max-w-2xl text-white"
               >
-                <h1 className="text-4xl md:text-6xl font-bold mb-4 leading-tight">
+                <h1 className="text-4xl md:text-6xl font-bold mb-4 leading-tight whitespace-pre-line">
                   {slides[currentSlide].title}
                 </h1>
-                <p className="text-xl md:text-2xl mb-8 text-gray-200">
+                <p className="text-xl md:text-2xl mb-8 text-gray-200 whitespace-pre-line">
                   {slides[currentSlide].subtitle}
                 </p>
                 <motion.button

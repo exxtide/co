@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { X, Package, ShoppingBag, Settings, RefreshCw, Percent } from 'lucide-react';
+import { X, Package, ShoppingBag, Settings, RefreshCw, Percent, Sparkles } from 'lucide-react';
+import { AdminDishOfTheDay } from './AdminDishOfTheDay';
 import { apiService, type OrderRecord } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -25,7 +26,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   const knownOrderIds = useRef<Set<string>>(new Set());
   const [newOrderNotice, setNewOrderNotice] = useState<string>('');
   const [productForm, setProductForm] = useState({
-    name_with_weight: '',
+    name: '',
+    weight: '',
     price: '',
     category: '',
     subcategory: '',
@@ -46,15 +48,27 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   const [categoryEditName, setCategoryEditName] = useState('');
   const [categoryEditImage, setCategoryEditImage] = useState<File | null>(null);
 
-  const [promotionForm, setPromotionForm] = useState({ name: '', description: '' });
+  const [promotionForm, setPromotionForm] = useState({
+    name: '',
+    description: '',
+    conditions: '',
+    terms: '',
+    pdf_link_text: '',
+    end_date: '',
+  });
   const [promotionImage, setPromotionImage] = useState<File | null>(null);
+  const [promotionBannerImage, setPromotionBannerImage] = useState<File | null>(null);
+  const [promotionPdfFile, setPromotionPdfFile] = useState<File | null>(null);
   const [submittingPromotion, setSubmittingPromotion] = useState(false);
+  const [editingPromotionSlug, setEditingPromotionSlug] = useState<string | null>(null);
+  const [submittingPromotionEdit, setSubmittingPromotionEdit] = useState(false);
 
   const [editingProductSlug, setEditingProductSlug] = useState<string | null>(null);
   const [submittingProductEdit, setSubmittingProductEdit] = useState(false);
   const [productEditImage, setProductEditImage] = useState<File | null>(null);
   const [productEditForm, setProductEditForm] = useState({
-    name_with_weight: '',
+    name: '',
+    weight: '',
     price: '',
     category: '',
     subcategory: '',
@@ -272,7 +286,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     setSubmittingProduct(true);
     try {
       await apiService.adminCreateProduct({
-        name_with_weight: productForm.name_with_weight.trim(),
+        name_with_weight: `${productForm.name.trim()} ${productForm.weight.trim()}`,
         price,
         image: productImage,
         is_available: productForm.is_available,
@@ -283,7 +297,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
         ...(productForm.promotion ? { promotion: parseInt(productForm.promotion, 10) } : {}),
       });
       setProductForm({
-        name_with_weight: '',
+        name: '',
+        weight: '',
         price: '',
         category: '',
         subcategory: '',
@@ -384,6 +399,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     e.preventDefault();
     const name = promotionForm.name.trim();
     const description = promotionForm.description.trim();
+    const conditions = promotionForm.conditions.trim();
+    const terms = promotionForm.terms.trim();
+    const pdf_link_text = promotionForm.pdf_link_text.trim();
     if (!name) {
       alert('Укажите название акции.');
       return;
@@ -398,9 +416,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     }
     setSubmittingPromotion(true);
     try {
-      await apiService.adminCreatePromotion({ name, description, image: promotionImage });
-      setPromotionForm({ name: '', description: '' });
+      await apiService.adminCreatePromotion({
+        name,
+        description,
+        image: promotionImage,
+        conditions,
+        terms,
+        pdf_file: promotionPdfFile || undefined,
+        pdf_link_text,
+        banner_image: promotionBannerImage || undefined,
+        end_date: promotionForm.end_date || undefined,
+      });
+      setPromotionForm({ name: '', description: '', conditions: '', terms: '', pdf_link_text: '', end_date: '' });
       setPromotionImage(null);
+      setPromotionBannerImage(null);
+      setPromotionPdfFile(null);
       await loadPromotions();
       setActiveTab('promotions');
     } catch (error) {
@@ -411,11 +441,78 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  const startEditPromotion = (promotion: (typeof promotions)[number]) => {
+    setEditingPromotionSlug(promotion.slug);
+    setPromotionForm({
+      name: promotion.title,
+      description: promotion.description,
+      conditions: promotion.conditions || '',
+      terms: promotion.terms || '',
+      pdf_link_text: promotion.pdf_link_text || '',
+      end_date: promotion.end_date ? promotion.end_date.slice(0, 16) : '',
+    });
+    setPromotionImage(null);
+    setPromotionBannerImage(null);
+    setPromotionPdfFile(null);
+  };
+
+  const cancelEditPromotion = () => {
+    setEditingPromotionSlug(null);
+    setPromotionForm({ name: '', description: '', conditions: '', terms: '', pdf_link_text: '', end_date: '' });
+    setPromotionImage(null);
+    setPromotionBannerImage(null);
+    setPromotionPdfFile(null);
+  };
+
+  const saveEditPromotion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPromotionSlug) return;
+    const name = promotionForm.name.trim();
+    const description = promotionForm.description.trim();
+    if (!name || !description) {
+      alert('Укажите название и описание акции.');
+      return;
+    }
+    setSubmittingPromotionEdit(true);
+    try {
+      await apiService.adminUpdatePromotion(editingPromotionSlug, {
+        name,
+        description,
+        image: promotionImage,
+        conditions: promotionForm.conditions.trim(),
+        terms: promotionForm.terms.trim(),
+        pdf_file: promotionPdfFile,
+        pdf_link_text: promotionForm.pdf_link_text.trim(),
+        banner_image: promotionBannerImage,
+        end_date: promotionForm.end_date || undefined,
+      });
+      cancelEditPromotion();
+      await loadPromotions();
+    } catch (error) {
+      console.error(error);
+      alert('Не удалось обновить акцию.');
+    } finally {
+      setSubmittingPromotionEdit(false);
+    }
+  };
+
+  const deletePromotion = async (slug: string) => {
+    if (!window.confirm('Удалить акцию? Это действие необратимо.')) return;
+    try {
+      await apiService.adminDeletePromotion(slug);
+      await loadPromotions();
+    } catch (error) {
+      console.error(error);
+      alert('Не удалось удалить акцию.');
+    }
+  };
+
   const startEditProduct = (product: (typeof products)[number]) => {
     const nutrition = product.nutrition_per_100g ?? [];
     setProductEditImage(null);
     setProductEditForm({
-      name_with_weight: product.name,
+      name: product.name,
+      weight: product.weight ?? '',
       price: String(product.price),
       category: product.category_id,
       subcategory: product.subcategory_id ?? '',
@@ -442,11 +539,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     const productToEdit = products.find((p) => p.slug === editingProductSlug);
     if (!productToEdit) return;
 
-    const name = productEditForm.name_with_weight.trim();
+    const name = productEditForm.name.trim();
     if (!name) {
       alert('Укажите название товара.');
       return;
     }
+    const name_with_weight = `${name} (${productEditForm.weight.trim()})`;
 
     const composition = productEditForm.composition.trim();
     if (!composition) {
@@ -475,7 +573,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     }
 
     const body: Record<string, unknown> = {
-      name_with_weight: name,
+      name_with_weight,
       price,
       is_available: productEditForm.is_available,
       composition,
@@ -538,6 +636,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                 { id: 'products', icon: Package, label: 'Товары' },
                 { id: 'categories', icon: Settings, label: 'Категории' },
                 { id: 'promotions', icon: Percent, label: 'Акции' },
+                { id: 'dishofday', icon: Sparkles, label: 'Блюдо дня' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -745,11 +844,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                   <h4 className="font-medium">Добавить новый товар</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <input
-                      value={productForm.name_with_weight}
-                      onChange={(e) => setProductForm((prev) => ({ ...prev, name_with_weight: e.target.value }))}
-                      placeholder="Название с граммовкой"
+                      value={productForm.name}
+                      onChange={(e) => setProductForm((prev) => ({ ...prev, name: e.target.value }))}
+                      placeholder="Название"
                       className="border rounded px-3 py-2"
                       required
+                    />
+                    <input
+                      value={productForm.weight}
+                      onChange={(e) => setProductForm((prev) => ({ ...prev, weight: e.target.value }))}
+                      placeholder="Вес (например: 500 г)"
+                      className="border rounded px-3 py-2"
                     />
                     <input
                       value={productForm.price}
@@ -919,11 +1024,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                       <form onSubmit={submitEditProduct} className="p-6 space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <input
-                            value={productEditForm.name_with_weight}
-                            onChange={(e) => setProductEditForm((prev) => ({ ...prev, name_with_weight: e.target.value }))}
-                            placeholder="Название с граммовкой"
+                            value={productEditForm.name}
+                            onChange={(e) => setProductEditForm((prev) => ({ ...prev, name: e.target.value }))}
+                            placeholder="Название"
                             className="border rounded px-3 py-2"
                             required
+                          />
+                          <input
+                            value={productEditForm.weight}
+                            onChange={(e) => setProductEditForm((prev) => ({ ...prev, weight: e.target.value }))}
+                            placeholder="Вес (например: 500 г)"
+                            className="border rounded px-3 py-2"
                           />
                           <input
                             value={productEditForm.price}
@@ -1226,40 +1337,199 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                   <h3 className="text-xl font-semibold">Акции</h3>
                 </div>
 
-                <form onSubmit={createPromotion} className="bg-gray-50 border rounded-lg p-4 mb-6 space-y-3">
-                  <h4 className="font-medium">Добавить акцию</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input
-                      value={promotionForm.name}
-                      onChange={(e) => setPromotionForm((prev) => ({ ...prev, name: e.target.value }))}
-                      placeholder="Название акции"
-                      className="border rounded px-3 py-2"
-                      required
-                    />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="border rounded px-3 py-2"
-                      onChange={(e) => setPromotionImage(e.target.files?.[0] ?? null)}
-                      required
-                    />
-                    <textarea
-                      value={promotionForm.description}
-                      onChange={(e) => setPromotionForm((prev) => ({ ...prev, description: e.target.value }))}
-                      placeholder="Описание"
-                      className="border rounded px-3 py-2 md:col-span-2"
-                      rows={3}
-                      required
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={submittingPromotion}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg disabled:opacity-50"
-                  >
-                    {submittingPromotion ? 'Сохраняем...' : 'Добавить акцию'}
-                  </button>
-                </form>
+                {editingPromotionSlug ? (
+                  <form onSubmit={saveEditPromotion} className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 space-y-3">
+                    <h4 className="font-medium">Редактировать акцию</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <input
+                        value={promotionForm.name}
+                        onChange={(e) => setPromotionForm((prev) => ({ ...prev, name: e.target.value }))}
+                        placeholder="Название акции"
+                        className="border rounded px-3 py-2"
+                        required
+                      />
+                      <div className="border rounded px-3 py-2 bg-white">
+                        <label className="text-sm text-gray-600 block mb-1">Основное изображение (карточка)</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => setPromotionImage(e.target.files?.[0] ?? null)}
+                        />
+                      </div>
+                      <div className="border rounded px-3 py-2 bg-white md:col-span-2">
+                        <label className="text-sm text-gray-600 block mb-1">
+                          Изображение шапки (рекомендуется 1920×600 или соотношение 16:5)
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => setPromotionBannerImage(e.target.files?.[0] ?? null)}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Если не выбрано — используется основное изображение
+                        </p>
+                      </div>
+                      <textarea
+                        value={promotionForm.description}
+                        onChange={(e) => setPromotionForm((prev) => ({ ...prev, description: e.target.value }))}
+                        placeholder="Описание"
+                        className="border rounded px-3 py-2 md:col-span-2"
+                        rows={3}
+                        required
+                      />
+                      <input
+                        value={promotionForm.conditions}
+                        onChange={(e) => setPromotionForm((prev) => ({ ...prev, conditions: e.target.value }))}
+                        placeholder="Условия акции (например: При покупке от 2000₽)"
+                        className="border rounded px-3 py-2 md:col-span-2"
+                      />
+                      <textarea
+                        value={promotionForm.terms}
+                        onChange={(e) => setPromotionForm((prev) => ({ ...prev, terms: e.target.value }))}
+                        placeholder="Пользовательское соглашение / Условия использования"
+                        className="border rounded px-3 py-2 md:col-span-2"
+                        rows={4}
+                      />
+                      <div className="border rounded px-3 py-2 bg-white md:col-span-2">
+                        <label className="text-sm text-gray-600 block mb-1">PDF файл с условиями акции</label>
+                        <input
+                          type="file"
+                          accept=".pdf"
+                          onChange={(e) => setPromotionPdfFile(e.target.files?.[0] ?? null)}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Загрузите PDF файл с подробными условиями акции
+                        </p>
+                      </div>
+                      <input
+                        value={promotionForm.pdf_link_text}
+                        onChange={(e) => setPromotionForm((prev) => ({ ...prev, pdf_link_text: e.target.value }))}
+                        placeholder="Текст ссылки на PDF (например: Подробнее про акцию)"
+                        className="border rounded px-3 py-2 md:col-span-2"
+                      />
+                      <div className="border rounded px-3 py-2 bg-white md:col-span-2">
+                        <label className="text-sm text-gray-600 block mb-1">Дата окончания акции</label>
+                        <input
+                          type="datetime-local"
+                          value={promotionForm.end_date}
+                          onChange={(e) => setPromotionForm((prev) => ({ ...prev, end_date: e.target.value }))}
+                          className="w-full"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Если не указана — акция действует бессрочно
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="submit"
+                        disabled={submittingPromotionEdit}
+                        className="px-4 py-2 bg-yellow-600 text-white rounded-lg disabled:opacity-50"
+                      >
+                        {submittingPromotionEdit ? 'Сохраняем...' : 'Сохранить изменения'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelEditPromotion}
+                        className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg"
+                      >
+                        Отмена
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <form onSubmit={createPromotion} className="bg-gray-50 border rounded-lg p-4 mb-6 space-y-3">
+                    <h4 className="font-medium">Добавить акцию</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <input
+                        value={promotionForm.name}
+                        onChange={(e) => setPromotionForm((prev) => ({ ...prev, name: e.target.value }))}
+                        placeholder="Название акции"
+                        className="border rounded px-3 py-2"
+                        required
+                      />
+                      <div className="border rounded px-3 py-2 bg-white">
+                        <label className="text-sm text-gray-600 block mb-1">Основное изображение (карточка) *</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => setPromotionImage(e.target.files?.[0] ?? null)}
+                          required
+                        />
+                      </div>
+                      <div className="border rounded px-3 py-2 bg-white md:col-span-2">
+                        <label className="text-sm text-gray-600 block mb-1">
+                          Изображение шапки (рекомендуется 1920×600 или соотношение 16:5)
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => setPromotionBannerImage(e.target.files?.[0] ?? null)}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Если не выбрано — используется основное изображение
+                        </p>
+                      </div>
+                      <textarea
+                        value={promotionForm.description}
+                        onChange={(e) => setPromotionForm((prev) => ({ ...prev, description: e.target.value }))}
+                        placeholder="Описание"
+                        className="border rounded px-3 py-2 md:col-span-2"
+                        rows={3}
+                        required
+                      />
+                      <input
+                        value={promotionForm.conditions}
+                        onChange={(e) => setPromotionForm((prev) => ({ ...prev, conditions: e.target.value }))}
+                        placeholder="Условия акции (например: При покупке от 2000₽)"
+                        className="border rounded px-3 py-2 md:col-span-2"
+                      />
+                      <textarea
+                        value={promotionForm.terms}
+                        onChange={(e) => setPromotionForm((prev) => ({ ...prev, terms: e.target.value }))}
+                        placeholder="Пользовательское соглашение / Условия использования"
+                        className="border rounded px-3 py-2 md:col-span-2"
+                        rows={4}
+                      />
+                      <div className="border rounded px-3 py-2 bg-white md:col-span-2">
+                        <label className="text-sm text-gray-600 block mb-1">PDF файл с условиями акции</label>
+                        <input
+                          type="file"
+                          accept=".pdf"
+                          onChange={(e) => setPromotionPdfFile(e.target.files?.[0] ?? null)}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Загрузите PDF файл с подробными условиями акции
+                        </p>
+                      </div>
+                      <input
+                        value={promotionForm.pdf_link_text}
+                        onChange={(e) => setPromotionForm((prev) => ({ ...prev, pdf_link_text: e.target.value }))}
+                        placeholder="Текст ссылки на PDF (например: Подробнее про акцию)"
+                        className="border rounded px-3 py-2 md:col-span-2"
+                      />
+                      <div className="border rounded px-3 py-2 bg-white md:col-span-2">
+                        <label className="text-sm text-gray-600 block mb-1">Дата окончания акции</label>
+                        <input
+                          type="datetime-local"
+                          value={promotionForm.end_date}
+                          onChange={(e) => setPromotionForm((prev) => ({ ...prev, end_date: e.target.value }))}
+                          className="w-full"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Если не указана — акция действует бессрочно
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={submittingPromotion}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg disabled:opacity-50"
+                    >
+                      {submittingPromotion ? 'Сохраняем...' : 'Добавить акцию'}
+                    </button>
+                  </form>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {promotions.map((p) => (
@@ -1272,11 +1542,29 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                         )}
                       </div>
                       <h4 className="font-medium mb-1">{p.title}</h4>
-                      <p className="text-sm text-gray-600 line-clamp-3">{p.description}</p>
+                      <p className="text-sm text-gray-600 line-clamp-3 mb-3">{p.description}</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => startEditPromotion(p)}
+                          className="flex-1 px-3 py-1.5 bg-yellow-100 text-yellow-700 rounded text-sm hover:bg-yellow-200 transition-colors"
+                        >
+                          Редактировать
+                        </button>
+                        <button
+                          onClick={() => deletePromotion(p.slug)}
+                          className="flex-1 px-3 py-1.5 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200 transition-colors"
+                        >
+                          Удалить
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
               </>
+            )}
+
+            {activeTab === 'dishofday' && (
+              <AdminDishOfTheDay />
             )}
           </div>
         </div>
