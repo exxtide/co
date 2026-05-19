@@ -399,77 +399,51 @@ export const apiService = {
     }
   },
 
-  login: async (email: string, password: string): Promise<{ token: string; user: AuthUser }> => {
+  /** Отправка кода подтверждения на телефон */
+  sendCode: async (phone: string, method: 'telegram' | 'max'): Promise<{ phone: string; method: string; code?: string }> => {
     try {
-      const { data } = await api.post<{ token: string; user: DjangoUser }>('/auth/login/', {
-        email,
-        password,
+      const { data } = await api.post<{ phone: string; method: string; code?: string }>('/auth/send-code/', {
+        phone,
+        method,
       });
-      return { token: data.token, user: mapUser(data.user) };
-    } catch (e) {
-      const { message, code } = parseApiError(e);
-      const err = new Error(message) as Error & { code?: string };
-      if (code) err.code = code;
-      throw err;
-    }
-  },
-
-  /** Регистрация: токен не выдаётся, пока не подтверждён email. */
-  register: async (
-    email: string,
-    password: string,
-    firstName?: string,
-  ): Promise<{ email: string }> => {
-    try {
-      const { data } = await api.post<{ detail: string; email: string; needs_verification?: boolean }>(
-        '/auth/register/',
-        {
-          email,
-          password,
-          first_name: firstName?.trim() || '',
-        },
-      );
-      return { email: data.email };
-    } catch (e) {
-      throw new Error(formatApiError(e));
-    }
-  },
-
-  resendVerificationEmail: async (email: string): Promise<void> => {
-    await api.post('/auth/resend-verification/', { email });
-  },
-
-  verifyEmail: async (uid: string, token: string): Promise<{ verified?: boolean; already_verified?: boolean }> => {
-    try {
-      const { data } = await api.post<{ verified?: boolean; already_verified?: boolean }>(
-        '/auth/verify-email/',
-        { uid, token },
-      );
       return data;
     } catch (e) {
       throw new Error(formatApiError(e));
     }
   },
 
+  /** Проверка кода и вход/регистрация */
+  verifyCode: async (phone: string, code: string): Promise<{ token: string; user: AuthUser }> => {
+    try {
+      const { data } = await api.post<{ token: string; user: DjangoUser }>('/auth/verify-code/', {
+        phone,
+        code,
+      });
+      return { token: data.token, user: mapUser(data.user) };
+    } catch (e) {
+      const { message, code: errCode } = parseApiError(e);
+      const err = new Error(message) as Error & { code?: string };
+      if (errCode) err.code = errCode;
+      throw err;
+    }
+  },
+
+  /** Авторизация через Telegram Login Widget */
+  telegramLogin: async (tgUser: { id: number; first_name: string; last_name?: string; username?: string; photo_url?: string; auth_date: number; hash: string }): Promise<{ token: string; user: AuthUser }> => {
+    try {
+      const { data } = await api.post<{ token: string; user: DjangoUser }>('/auth/telegram/', tgUser);
+      return { token: data.token, user: mapUser(data.user) };
+    } catch (e) {
+      const { message, code: errCode } = parseApiError(e);
+      const err = new Error(message) as Error & { code?: string };
+      if (errCode) err.code = errCode;
+      throw err;
+    }
+  },
+
   updateProfile: async (firstName: string): Promise<AuthUser> => {
     const { data } = await api.patch<DjangoUser>('/auth/profile/', { first_name: firstName });
     return mapUser(data);
-  },
-
-  updateProfilePhone: async (phone: string): Promise<AuthUser> => {
-    const { data } = await api.patch<DjangoUser>('/auth/profile/', { phone });
-    return mapUser(data);
-  },
-
-  changePassword: async (oldPassword: string, newPassword: string): Promise<void> => {
-    try {
-      await api.post('/auth/password/', {
-        old_password: oldPassword,
-        new_password: newPassword,
-      });
-    } catch (e) {
-      throw new Error(formatApiError(e));
-    }
   },
 
   logout: async (): Promise<void> => {

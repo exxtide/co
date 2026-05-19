@@ -39,8 +39,12 @@ def _split_csv(value: str) -> list[str]:
     return [x.strip() for x in (value or "").split(",") if x.strip()]
 
 
-_allowed_hosts_default = "localhost,127.0.0.1,0.0.0.0" if not IS_PRODUCTION else ""
+# Для разработки разрешаем все поддомены loca.lt и ngrok, а также любые хосты если DEBUG
+_allowed_hosts_default = "localhost,127.0.0.1,0.0.0.0,.ngrok-free.dev,.loca.lt,*" if not IS_PRODUCTION else ""
 ALLOWED_HOSTS = _split_csv(os.environ.get("DJANGO_ALLOWED_HOSTS", _allowed_hosts_default))
+# В DEBUG режиме разрешаем любые хосты
+if DEBUG:
+    ALLOWED_HOSTS = ['*']
 if IS_PRODUCTION and not ALLOWED_HOSTS:
     raise RuntimeError("DJANGO_ALLOWED_HOSTS must be set in production")
 
@@ -64,6 +68,9 @@ FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://127.0.0.1:5173").rstrip("/
 
 # DaData: токен для автоподстановки адреса.
 DADATA_TOKEN = os.environ.get("DADATA_TOKEN", "")
+
+# Telegram Bot Token для Login Widget
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "8610099496:AAHfZIdVbiRF1exnrMq5N88YxD4T0Tkrefw")
 
 # Почта: в разработке письма выводятся в консоль (см. runserver).
 EMAIL_BACKEND = os.environ.get(

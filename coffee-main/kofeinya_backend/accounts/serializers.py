@@ -6,15 +6,18 @@ from .models import UserProfile
 
 
 class UserPublicSerializer(serializers.ModelSerializer):
-    email_verified = serializers.SerializerMethodField()
+    phone_verified = serializers.SerializerMethodField()
     phone = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ("id", "username", "email", "first_name", "is_staff", "email_verified", "phone")
+        fields = ("id", "username", "email", "first_name", "is_staff", "phone_verified", "phone")
 
-    def get_email_verified(self, obj: User) -> bool:
-        return bool(obj.is_active)
+    def get_phone_verified(self, obj: User) -> bool:
+        profile = getattr(obj, "profile", None)
+        if profile and isinstance(profile, UserProfile):
+            return profile.is_phone_verified
+        return False
 
     def get_phone(self, obj: User) -> str:
         profile = getattr(obj, "profile", None)

@@ -4,8 +4,9 @@ import { apiService, type AuthUser } from '../services/api';
 interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, firstName?: string) => Promise<void>;
+  // Новые методы для авторизации по телефону
+  sendCode: (phone: string, method: 'telegram' | 'max') => Promise<{ phone: string; method: string; code?: string }>;
+  verifyCode: (phone: string, code: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -52,14 +53,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       .finally(() => setLoading(false));
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    const { token, user: u } = await apiService.login(email, password);
-    localStorage.setItem('token', token);
-    setUser(u);
+  /** Отправка кода подтверждения */
+  const sendCode = async (phone: string, method: 'telegram' | 'max') => {
+    return await apiService.sendCode(phone, method);
   };
 
-  const signUp = async (email: string, password: string, firstName?: string) => {
-    await apiService.register(email, password, firstName);
+  /** Проверка кода и вход */
+  const verifyCode = async (phone: string, code: string) => {
+    const { token, user: u } = await apiService.verifyCode(phone, code);
+    localStorage.setItem('token', token);
+    setUser(u);
   };
 
   const signOut = async () => {
@@ -69,7 +72,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, sendCode, verifyCode, signOut, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
