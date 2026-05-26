@@ -60,3 +60,40 @@ class UserProfile(models.Model):
 def _ensure_profile(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)
+
+
+class Broadcast(models.Model):
+    """Модель для хранения рассылок в Telegram"""
+
+    STYLE_CHOICES = [
+        ('', 'Обычный'),
+        ('bold', 'Жирный'),
+        ('italic', 'Курсив'),
+        ('underline', 'Подчеркнутый'),
+        ('strikethrough', 'Зачеркнутый'),
+        ('code', 'Код'),
+        ('spoiler', 'Спойлер'),
+    ]
+
+    title = models.CharField(max_length=255, blank=True, verbose_name="Заголовок")
+    title_style = models.CharField(
+        max_length=20,
+        choices=STYLE_CHOICES,
+        blank=True,
+        default='bold',
+        verbose_name="Стиль заголовка"
+    )
+    text = models.TextField(blank=True, verbose_name="Текст сообщения")
+    image = models.ImageField(upload_to='broadcasts/', blank=True, null=True, verbose_name="Изображение")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+    sent_at = models.DateTimeField(null=True, blank=True, verbose_name="Дата отправки")
+    sent_count = models.PositiveIntegerField(default=0, verbose_name="Количество отправленных")
+    is_sent = models.BooleanField(default=False, verbose_name="Отправлено")
+
+    class Meta:
+        verbose_name = "Рассылка"
+        verbose_name_plural = "Рассылки"
+        ordering = ['-created_at']
+
+    def __str__(self) -> str:
+        return f"Рассылка #{self.id} - {self.title or 'Без заголовка'}"

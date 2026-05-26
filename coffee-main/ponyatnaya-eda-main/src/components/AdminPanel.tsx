@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { X, Package, ShoppingBag, Settings, RefreshCw, Percent, Sparkles } from 'lucide-react';
+import { X, Package, ShoppingBag, Settings, RefreshCw, Percent, Sparkles, Send } from 'lucide-react';
 import { AdminDishOfTheDay } from './AdminDishOfTheDay';
+import { BroadcastTab } from './BroadcastTab';
 import { apiService, type OrderRecord } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -637,6 +638,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                 { id: 'categories', icon: Settings, label: 'Категории' },
                 { id: 'promotions', icon: Percent, label: 'Акции' },
                 { id: 'dishofday', icon: Sparkles, label: 'Блюдо дня' },
+                { id: 'broadcast', icon: Send, label: 'Рассылка' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -1565,6 +1567,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
 
             {activeTab === 'dishofday' && (
               <AdminDishOfTheDay />
+            )}
+
+            {activeTab === 'broadcast' && (
+              <BroadcastTab />
             )}
           </div>
         </div>

@@ -72,6 +72,13 @@ DADATA_TOKEN = os.environ.get("DADATA_TOKEN", "")
 # Telegram Bot Token для Login Widget
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "8610099496:AAHfZIdVbiRF1exnrMq5N88YxD4T0Tkrefw")
 
+# Telegram Bot Service (микросервис на Render.com)
+TELEGRAM_BOT_SERVICE_URL = os.environ.get("TELEGRAM_BOT_SERVICE_URL", "https://tg-bot-server-zdz8.onrender.com")
+TELEGRAM_BOT_API_SECRET = os.environ.get("TELEGRAM_BOT_API_SECRET", "857b87ad2fa64d64b846d85d67e88fa0")
+
+# API ключ для связи бота с Django
+BOT_API_KEY = os.environ.get("BOT_API_KEY", "django-bot-api-key-12345")
+
 # Почта: в разработке письма выводятся в консоль (см. runserver).
 EMAIL_BACKEND = os.environ.get(
     "EMAIL_BACKEND",

@@ -112,11 +112,10 @@ export default function AccountPage() {
     <div className="container mx-auto px-4 py-10 max-w-xl">
       <h1 className="text-3xl font-bold text-gray-800 mb-2">Настройки аккаунта</h1>
       <p className="text-gray-600 mb-8">
-        {user.email}
-        {user.email_verified ? (
-          <span className="ml-2 text-green-600 text-sm">· email подтверждён</span>
+        {user.phone ? (
+          <span className="text-green-600 text-sm">Телефон подтверждён: {user.phone}</span>
         ) : (
-          <span className="ml-2 text-amber-600 text-sm">· подтвердите email</span>
+          <span className="text-amber-600 text-sm">Телефон не привязан</span>
         )}
       </p>
 

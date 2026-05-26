@@ -399,39 +399,23 @@ export const apiService = {
     }
   },
 
-  /** Отправка кода подтверждения на телефон */
-  sendCode: async (phone: string, method: 'telegram' | 'max'): Promise<{ phone: string; method: string; code?: string }> => {
+  /** Регистрация нового пользователя */
+  register: async (payload: { first_name: string; phone: string; password: string; password_confirm: string }): Promise<{ token: string; user: AuthUser }> => {
     try {
-      const { data } = await api.post<{ phone: string; method: string; code?: string }>('/auth/send-code/', {
-        phone,
-        method,
-      });
-      return data;
+      const { data } = await api.post<{ token: string; user: DjangoUser }>('/auth/register/', payload);
+      return { token: data.token, user: mapUser(data.user) };
     } catch (e) {
       throw new Error(formatApiError(e));
     }
   },
 
-  /** Проверка кода и вход/регистрация */
-  verifyCode: async (phone: string, code: string): Promise<{ token: string; user: AuthUser }> => {
+  /** Вход по номеру телефона и паролю */
+  login: async (phone: string, password: string): Promise<{ token: string; user: AuthUser }> => {
     try {
-      const { data } = await api.post<{ token: string; user: DjangoUser }>('/auth/verify-code/', {
+      const { data } = await api.post<{ token: string; user: DjangoUser }>('/auth/login/', {
         phone,
-        code,
+        password,
       });
-      return { token: data.token, user: mapUser(data.user) };
-    } catch (e) {
-      const { message, code: errCode } = parseApiError(e);
-      const err = new Error(message) as Error & { code?: string };
-      if (errCode) err.code = errCode;
-      throw err;
-    }
-  },
-
-  /** Авторизация через Telegram Login Widget */
-  telegramLogin: async (tgUser: { id: number; first_name: string; last_name?: string; username?: string; photo_url?: string; auth_date: number; hash: string }): Promise<{ token: string; user: AuthUser }> => {
-    try {
-      const { data } = await api.post<{ token: string; user: DjangoUser }>('/auth/telegram/', tgUser);
       return { token: data.token, user: mapUser(data.user) };
     } catch (e) {
       const { message, code: errCode } = parseApiError(e);
@@ -690,5 +674,157 @@ export const apiService = {
 
   adminDeleteDishOfTheDay: async (): Promise<void> => {
     await api.delete('/admin/dish-of-the-day/');
+  },
+
+  // ==================== Telegram Регистрация ====================
+
+  /** Инициирует регистрацию через Telegram */
+  telegramInitiateRegistration: async (phone: string): Promise<{
+    telegram_link: string;
+    token: string;
+    expires_in: number;
+  }> => {
+    try {
+      const { data } = await api.post('/auth/telegram/initiate-registration/', { phone });
+      return data;
+    } catch (e) {
+      throw new Error(formatApiError(e));
+    }
+  },
+
+  /** Проверяет статус регистрации по токену */
+  telegramCheckRegistration: async (token: string): Promise<{
+    success: boolean;
+    status: 'pending' | 'completed' | 'expired';
+    phone?: string;
+    chat_id?: number;
+    first_name?: string;
+  }> => {
+    try {
+      const { data } = await api.get(`/auth/telegram/check-registration/${token}/`);
+      return data;
+    } catch (e) {
+      throw new Error(formatApiError(e));
+    }
+  },
+
+  /** Завершает регистрацию через Telegram */
+  telegramCompleteRegistration: async (payload: {
+    token: string;
+    password: string;
+    password_confirm: string;
+  }): Promise<{ token: string; user: AuthUser }> => {
+    try {
+      const { data } = await api.post<{ token: string; user: DjangoUser }>('/auth/telegram/complete-registration/', payload);
+      return { token: data.token, user: mapUser(data.user) };
+    } catch (e) {
+      throw new Error(formatApiError(e));
+    }
+  },
+
+  // ==================== Восстановление пароля ====================
+
+  /** Инициирует восстановление пароля */
+  passwordResetInitiate: async (phone: string): Promise<{
+    telegram_link?: string;
+    token: string;
+    code_sent_directly: boolean;
+    expires_in: number;
+    message: string;
+  }> => {
+    try {
+      const { data } = await api.post('/auth/password-reset/initiate/', { phone });
+      return data;
+    } catch (e) {
+      throw new Error(formatApiError(e));
+    }
+  },
+
+  /** Проверяет код восстановления */
+  passwordResetVerify: async (token: string, code: string): Promise<{
+    temp_token: string;
+    phone: string;
+  }> => {
+    try {
+      const { data } = await api.post('/auth/password-reset/verify/', { token, code });
+      return data;
+    } catch (e) {
+      throw new Error(formatApiError(e));
+    }
+  },
+
+  /** Завершает смену пароля */
+  passwordResetComplete: async (payload: {
+    temp_token: string;
+    phone: string;
+    new_password: string;
+  }): Promise<{ token: string; user: AuthUser }> => {
+    try {
+      const { data } = await api.post<{ token: string; user: DjangoUser }>('/auth/password-reset/complete/', payload);
+      return { token: data.token, user: mapUser(data.user) };
+    } catch (e) {
+      throw new Error(formatApiError(e));
+    }
+  },
+
+  // ==================== Рассылки ====================
+
+  getBroadcasts: async (): Promise<Array<{
+    id: number;
+    title: string;
+    text: string;
+    has_image: boolean;
+    created_at: string;
+    sent_at: string | null;
+    sent_count: number;
+    is_sent: boolean;
+  }>> => {
+    try {
+      const { data } = await api.get('/admin/broadcasts/');
+      return data;
+    } catch (e) {
+      throw new Error(formatApiError(e));
+    }
+  },
+
+  createBroadcast: async (payload: {
+    title: string;
+    title_style: string;
+    text: string;
+    image?: File;
+  }): Promise<{ id: number; title: string; text: string; has_image: boolean; created_at: string }> => {
+    try {
+      const formData = new FormData();
+      formData.append('title', payload.title);
+      formData.append('title_style', payload.title_style);
+      formData.append('text', payload.text);
+      if (payload.image) {
+        formData.append('image', payload.image);
+      }
+      const { data } = await api.post('/admin/broadcasts/create/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return data;
+    } catch (e) {
+      throw new Error(formatApiError(e));
+    }
+  },
+
+  sendBroadcast: async (broadcastId: number): Promise<{ success: boolean; sent_count: number; failed_count: number; total: number }> => {
+    try {
+      const { data } = await api.post(`/admin/broadcasts/${broadcastId}/send/`);
+      return data;
+    } catch (e) {
+      throw new Error(formatApiError(e));
+    }
+  },
+
+  deleteBroadcast: async (broadcastId: number): Promise<{ success: boolean; message: string }> => {
+    try {
+      const { data } = await api.delete(`/admin/broadcasts/${broadcastId}/delete/`);
+      return data;
+    } catch (e) {
+      throw new Error(formatApiError(e));
+    }
   },
 };

@@ -95,7 +95,6 @@ export const MenuSlider: React.FCC<MenuSliderProps> = ({ categories }) => {
                   )}
                 </div>
                 <div className="py-4 text-center">
-                  <span className="text-xl md:text-2xl mr-2">{categoryIcons[category.name] || '🍽️'}</span>
                   <span className="text-gray-800 font-semibold text-lg md:text-xl">
                     {category.name}
                   </span>
