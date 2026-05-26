@@ -7,11 +7,12 @@ import { apiService } from '../services/api';
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  telegramToken?: string | null;
 }
 
 type AuthMode = 'login' | 'register' | 'telegram-register' | 'telegram-waiting' | 'telegram-password' | 'forgot-password' | 'forgot-verify' | 'forgot-new-password';
 
-export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
+export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, telegramToken }) => {
   const [mode, setMode] = useState<AuthMode>('login');
   const [firstName, setFirstName] = useState('');
   const [phone, setPhone] = useState('');
@@ -65,6 +66,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       }
     };
   }, [pollInterval]);
+
+  // Handle telegram token from props (passed from Header when URL has params)
+  useEffect(() => {
+    if (telegramToken) {
+      setRegistrationToken(telegramToken);
+      setMode('telegram-password');
+    }
+  }, [telegramToken]);
 
   const formatPhone = (value: string) => {
     const digits = value.replace(/\D/g, '');

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, User, Phone, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,6 +18,23 @@ export const Header: React.FC<HeaderProps> = ({ onAdminClick }) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showCartModal, setShowCartModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const [telegramCallbackToken, setTelegramCallbackToken] = useState<string | null>(null);
+
+  // Check for Telegram callback parameters on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const telegramToken = params.get('telegram_token');
+    const telegramAction = params.get('telegram_action');
+
+    if (telegramToken && telegramAction === 'register') {
+      // Clear URL parameters
+      window.history.replaceState({}, '', window.location.pathname);
+      // Save token and open auth modal
+      setTelegramCallbackToken(telegramToken);
+      setShowAuthModal(true);
+    }
+  }, []);
 
   const totalItems = getTotalItems();
 
@@ -166,7 +183,7 @@ export const Header: React.FC<HeaderProps> = ({ onAdminClick }) => {
         </div>
       </header>
 
-      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      <AuthModal isOpen={showAuthModal} onClose={() => { setShowAuthModal(false); setTelegramCallbackToken(null); }} telegramToken={telegramCallbackToken} />
       <CartModal isOpen={showCartModal} onClose={() => setShowCartModal(false)} />
     </>
   );
